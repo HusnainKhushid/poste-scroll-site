@@ -1,0 +1,655 @@
+/* ---------------------------------------------------------------
+   POSTE — hero
+   Cold ground, warm ink. The sky comes from the plate and stays blue;
+   every word on top of it is mixed from the object's own rust, brass
+   and wax. Oxblood is reserved for one word — `key` — plus the dot in
+   the wordmark. Nothing else may spend it.
+   --------------------------------------------------------------- */
+
+:root {
+  /* Ground stays cold — it is sky, and the plate's sky is blue.
+     Everything set in type is warm. Warm ink on a cold ground is the
+     whole reason this reads as expensive rather than merely clean:
+     the two families are complementary, so the words sit forward of
+     the picture without needing to be bigger or heavier. */
+  --ice-0: #eef3f7;
+  --ice-1: #cddcea;
+  --ice-2: #a9c0d4;
+
+  --ink: #1b1410; /* warm near-black — headline, dark blocks */
+  --ink-soft: #6b5545; /* umber — mono micro-copy */
+  --rust: #9e3b27; /* oxblood — the one accent word */
+  --brass: #b08a5e; /* hairlines and chip borders */
+  --bone: #f3efe9; /* warm white, for type on dark blocks */
+
+  --white: #fff;
+
+  --pad: clamp(1.25rem, 3.2vw, 3rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ice-1);
+  color: var(--ink);
+  font-family: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------
+   Stage — the video is the background, edge to edge.
+   No alpha needed because the plate carries its own sky.
+   --------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(120% 90% at 50% 20%, var(--ice-0), var(--ice-2));
+}
+
+.stage__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 46% 50%;
+  /* the clips share a first/last frame, so cross-fading between them
+     during the hand-off hides the single-frame swap entirely */
+  transition: opacity 90ms linear;
+}
+
+.stage__video--hidden {
+  opacity: 0;
+}
+
+/* Film grain. Small, tiled, and very quiet — it stops the wide flat
+   sky from banding on cheap panels and reads as photographic. */
+.stage__grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 6s steps(6) infinite;
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-6%, 3%); }
+  40% { transform: translate(4%, -5%); }
+  60% { transform: translate(-3%, 6%); }
+  80% { transform: translate(5%, 2%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Scrims. Just enough to guarantee the type holds at the edges
+   without ever reading as a grey box over the picture. */
+.stage__scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.stage__scrim--top {
+  top: 0;
+  height: 34vh;
+  background: linear-gradient(to bottom, rgb(238 243 247 / 62%), transparent);
+}
+
+/* The plate puts the mailbox dead centre, so the headline has to hold its
+   own column. This lifts the sky on the left just enough to guarantee
+   contrast without ever touching the mailbox. */
+.stage__scrim--left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: 42%;
+  background: linear-gradient(
+    to right,
+    rgb(242 238 231 / 86%) 0%,
+    rgb(240 237 232 / 58%) 42%,
+    transparent 100%
+  );
+}
+
+.stage__scrim--bottom {
+  bottom: 0;
+  height: 26vh;
+  background: linear-gradient(to top, rgb(205 220 234 / 70%), transparent);
+}
+
+.stage__ui {
+  position: relative;
+  z-index: 4;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: var(--pad);
+}
+
+/* ---------------------------------------------------------------
+   Entrance
+   --------------------------------------------------------------- */
+
+.rise {
+  opacity: 0;
+  animation: rise 1.1s var(--ease-out) forwards;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Top row — wordmark left, pill centre
+   --------------------------------------------------------------- */
+
+.top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 1rem;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  font-size: clamp(1rem, 1.35vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+}
+
+.wordmark__dot {
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background: var(--rust);
+  flex: none;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.6vw, 2.4rem);
+  padding: 0.68rem 0.75rem 0.68rem 1.35rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bone);
+  box-shadow: 0 10px 30px -12px rgb(27 20 16 / 45%);
+}
+
+.pill__label {
+  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pill__menu {
+  display: grid;
+  gap: 4px;
+  padding: 0.5rem;
+  border-radius: 999px;
+  transition: background 240ms var(--ease-out);
+}
+
+.pill__menu:hover {
+  background: rgb(255 255 255 / 12%);
+}
+
+.pill__menu span {
+  display: block;
+  width: 17px;
+  height: 1.5px;
+  background: var(--bone);
+}
+
+.top__right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------
+   Headline
+   --------------------------------------------------------------- */
+
+.mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2rem;
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(2.6rem, 5.4vw, 5.25rem);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  max-width: 9ch;
+}
+
+/* The serif italic is the one soft thing on the page. It carries the
+   word the whole product is about, and nothing else is allowed to
+   use it. */
+.headline__accent {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  padding-right: 0.06em;
+  color: var(--rust);
+  background-image: linear-gradient(var(--rust), var(--rust));
+  background-repeat: no-repeat;
+  background-position: 0 92%;
+  background-size: 100% 2px;
+}
+
+.standfirst {
+  margin: 1.9rem 0 0;
+  max-width: 34ch;
+  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+  font-size: clamp(0.66rem, 0.86vw, 0.76rem);
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------------
+   Feature panel — image block, chip, one feature line, pill CTA.
+   The dark block is what makes it hold against a pale sky; a frosted
+   card would simply dissolve into the snow.
+   --------------------------------------------------------------- */
+
+.panel {
+  align-self: center;
+  display: grid;
+  gap: 0.85rem;
+  width: clamp(12.5rem, 17vw, 15.5rem);
+  padding: 0.6rem 0.6rem 0.7rem;
+  background: var(--ink);
+  color: var(--bone);
+  border: 1px solid rgb(176 138 94 / 22%);
+  border-radius: 18px;
+  text-align: left;
+  box-shadow: 0 26px 50px -26px rgb(27 20 16 / 72%);
+  transition: transform 520ms var(--ease-out);
+}
+
+.panel:hover {
+  transform: translateY(-5px);
+}
+
+.panel__media {
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 13px;
+  background: #16100d;
+}
+
+.panel__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.panel__chip {
+  justify-self: start;
+  margin-top: 0.15rem;
+  padding: 0.42rem 0.85rem;
+  border: 1px solid rgb(176 138 94 / 52%);
+  border-radius: 999px;
+  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.panel__copy {
+  margin: 0;
+  padding: 0 0.25rem;
+  font-size: clamp(0.82rem, 1.02vw, 0.94rem);
+  font-weight: 500;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
+}
+
+.panel__cta {
+  margin-top: 0.15rem;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  background: var(--bone);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    background 260ms var(--ease-out),
+    transform 260ms var(--ease-out);
+}
+
+.panel__cta:hover {
+  background: var(--white);
+  transform: scale(1.02);
+}
+
+.panel__cta:focus-visible,
+.panel:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------
+   Open button — sits on the mailbox door
+   --------------------------------------------------------------- */
+
+.opener {
+  position: absolute;
+  z-index: 5;
+  /* Clear of the door's swing. It drops into the lower left, so the button
+     lives to the right of the box where it is readable in both states. */
+  left: 57%;
+  top: 78%;
+  width: clamp(5.5rem, 7.6vw, 7.25rem);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--white);
+  background: rgb(30 22 17 / 48%);
+  backdrop-filter: blur(7px) saturate(130%);
+  -webkit-backdrop-filter: blur(7px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 42%),
+    inset 0 -1px 0 rgb(0 0 0 / 12%),
+    0 16px 34px -14px rgb(20 23 27 / 50%);
+  transition:
+    transform 520ms var(--ease-out),
+    background 340ms var(--ease-out);
+}
+
+.opener:hover:not(:disabled) {
+  transform: scale(1.06);
+  background: rgb(30 22 17 / 60%);
+}
+
+.opener:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 120ms;
+}
+
+.opener:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.opener:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 6px;
+}
+
+.opener__label {
+  font-size: clamp(0.92rem, 1.15vw, 1.08rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 8px rgb(20 23 27 / 45%);
+}
+
+/* The thin ring, breathing. It is what tells you the object is
+   clickable before you have worked out that it is a door. */
+.opener__ring {
+  position: absolute;
+  inset: -26%;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: breathe 3.6s var(--ease-in-out) infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.07); opacity: 0.22; }
+}
+
+/* ---------------------------------------------------------------
+   Footer strip
+   --------------------------------------------------------------- */
+
+.foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(107 85 69 / 30%);
+  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.foot__box {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* A barcode drawn in one gradient. Cheaper than an image and it
+   never goes blurry. */
+.barcode {
+  width: 4.5rem;
+  height: 0.95rem;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--ink) 0 1px,
+    transparent 1px 3px,
+    var(--ink) 3px 5px,
+    transparent 5px 6px,
+    var(--ink) 6px 7px,
+    transparent 7px 10px
+  );
+  opacity: 0.72;
+}
+
+.foot__mid {
+  display: none;
+}
+
+/* ---------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------- */
+
+@media (min-width: 900px) {
+  .foot__mid {
+    display: block;
+  }
+}
+
+@media (max-width: 899px) {
+  /* Sampled from the plate's own edges so the feathered join below is
+     genuinely invisible rather than approximately invisible. */
+  .stage {
+    background: linear-gradient(to bottom, #e4eff8 0%, #d9e8f4 44%, #cadcec 100%);
+  }
+
+  /* Cover-cropping a 16:9 plate into a portrait viewport destroys the
+     composition, so on phones the plate becomes a bottom-anchored 4:5
+     block instead — a tighter crop that still holds the whole mailbox —
+     with its top edge dissolved into the page gradient. */
+  .stage__video {
+    top: auto;
+    bottom: 0;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    max-height: 66dvh;
+    object-position: 43% 50%;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 17%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 17%);
+  }
+
+  .stage__scrim--left {
+    display: none;
+  }
+
+  .stage__scrim--top {
+    height: 20vh;
+    background: linear-gradient(to bottom, rgb(228 239 248 / 72%), transparent);
+  }
+
+  .top {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .top__right {
+    display: none;
+  }
+
+  .pill {
+    min-width: 0;
+    padding: 0.5rem 0.55rem 0.5rem 1rem;
+    gap: 0.9rem;
+  }
+
+  .pill__label {
+    font-size: 0.5rem;
+    letter-spacing: 0.14em;
+  }
+
+  .pill__menu span {
+    width: 14px;
+  }
+
+  .mid {
+    grid-template-columns: 1fr;
+    align-content: start;
+    align-items: start;
+    padding-top: 4vh;
+  }
+
+  .headline {
+    font-size: clamp(2.4rem, 12.5vw, 3.5rem);
+    max-width: 8ch;
+  }
+
+  .standfirst {
+    margin-top: 1.1rem;
+    max-width: 30ch;
+    font-size: 0.58rem;
+    line-height: 1.7;
+  }
+
+  .panel {
+    display: none;
+  }
+
+  .opener {
+    left: 50%;
+    top: auto;
+    bottom: 13vh;
+    translate: -50% 0;
+    width: 5.5rem;
+  }
+
+  .opener:hover:not(:disabled),
+  .opener:active:not(:disabled) {
+    transform: none;
+  }
+
+  .foot {
+    font-size: 0.5rem;
+    letter-spacing: 0.12em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    opacity: 1;
+    animation: none;
+  }
+
+  .stage__grain,
+  .opener__ring {
+    animation: none;
+  }
+
+  * {
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Narrow phones: the tagline cannot share a row with the wordmark without
+   pushing the layout wider than the screen, and a clipped pill looks like a
+   bug rather than a choice. The line already appears in the standfirst, so
+   the pill reduces to what it is for — the menu. */
+@media (max-width: 620px) {
+  .pill {
+    padding: 0.55rem;
+    gap: 0;
+  }
+
+  .pill__label {
+    display: none;
+  }
+
+  .foot {
+    gap: 1rem;
+  }
+
+  .foot span {
+    white-space: nowrap;
+  }
+}
